@@ -11,14 +11,16 @@ time_table_drop = "drop table if exists time;"
 songplay_table_create = ("""
     create table if not exists songplays (
         songplay_id serial primary key,
-        start_time  bigint,
+        start_time  timestamp,
         user_id     int,
         level       varchar,
         song_id     varchar,
         artist_id   varchar,
         session_id  int,
         location    varchar,
-        user_agent  varchar
+        user_agent  varchar,
+        foreign key (user_id) references users(user_id),
+        foreign key (start_time) references time(start_time)
     );
 """)
 
@@ -54,7 +56,7 @@ artist_table_create = ("""
 
 time_table_create = ("""
     create table if not exists time (
-        start_time  bigint primary key ,
+        start_time  timestamp primary key ,
         hour        int,
         day         int,
         week        int,
@@ -68,13 +70,13 @@ time_table_create = ("""
 
 songplay_table_insert = ("""
     insert into songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
-    values (%s, %s, %s, %s, %s, %s, %s, %s);
+    values (to_timestamp(%s), %s, %s, %s, %s, %s, %s, %s);
 """)
 
 user_table_insert = ("""
     insert into users (user_id, first_name, last_name, gender, level)
     values (%s, %s, %s, %s, %s)
-    on conflict (user_id) do nothing;
+    on conflict (user_id) do update set level = excluded.level;
 """)
 
 song_table_insert = ("""
@@ -92,7 +94,7 @@ artist_table_insert = ("""
 
 time_table_insert = ("""
     insert into time (start_time, hour, day, week, month, year, weekday)
-    values (%s, %s, %s, %s, %s, %s, %s)
+    values (to_timestamp(%s), %s, %s, %s, %s, %s, %s)
     on conflict (start_time) do nothing;
 """)
 

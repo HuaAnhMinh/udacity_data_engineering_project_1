@@ -5,6 +5,21 @@ import pandas as pd
 from sql_queries import *
 
 def process_song_file(cur, filepath):
+    """Insert song, artist data from song file into songs and artists table
+    
+    Get filepath is the path to song file in json format, use pandas to read content in json file, then:
+    1. Extract required attributes for a song (song id, title, artist id, year, duration) and
+        insert extracted data into songs table.
+    2. Extract required attributes for an artist (artist id, name, location, latitude, longitude) and
+        insert extracted data into artists table.
+    
+    Args:
+        cur: cursor to the current database's connection. Type: psycopg2.extensions.cursor
+        filepath: path to song json file. Type: string
+        
+    Raises:
+        psycopg2.Error: An error occurred when inserting data into songs or artists table
+    """
     # open song file
     df = pd.read_json(filepath, lines=True)
 
@@ -18,6 +33,23 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    """Insert time, user, song played data from log file into time, users and songplays table
+    
+    Get filepath is the path to log file in json format, use pandas to read content in json file, then:
+    1. Get data about song played by filtering NextSong value in page column.
+    2. Convert timestamp (ts) column to datetime.
+    3. Extract date and time attributes in datetime data, transform into DataFrame and load into time table.
+    4. Extract data for each user (user id, first name, last name, gender, level) and load to users table.
+    5. Get song id and artist id for each song played.
+    6. Insert start_time, user id, level, song id, artist id, session id, location and user agent in each song played into songplays table.
+    
+    Args:
+        cur: cursor to the current database's connection. Type: psycopg2.extensions.cursor
+        filepath: path to log json file. Type: string
+        
+    Raises:
+        psycopg2.Error: An error occurred when inserting data into time or users or songplays table
+    """
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -60,6 +92,17 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    """Process data and call function to do ETL for each type of data file (songs and logs file).
+    
+    Get list of file paths inside filepath. For each file, call callback function and pass
+    required argument (cur, current filepath) to do ETL process.
+    
+    Args:
+        cur: cursor to the current database's connection. Type: psycopg2.extensions.cursor
+        conn: connection to the database. Type: psycopg2.extensions.connection
+        filepath: path to a parent file (songs or logs file path) with json format. Type: string
+        func: callback function to do ETL. Type: function
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -79,6 +122,10 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
+    """
+    Connect to database, get cursor of the connection and call process_data function to do ETL process
+    for each parent file path (songs and logs).
+    """
     conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 
